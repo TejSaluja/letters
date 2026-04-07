@@ -16,6 +16,8 @@ interface Letter {
 
 type View = 'login' | 'list' | 'write' | 'view';
 
+const CLIENT_PASSWORD = 'twopindiyaaninapateela';
+const ACCESS_STORAGE_KEY = 'letters_access_granted';
 const API_UNAVAILABLE_MESSAGE = 'API is unavailable at this URL. Run `npm run dev:vercel` from the letters folder and open the exact URL shown in terminal.';
 
 function isJsonResponse(response: Response): boolean {
@@ -84,16 +86,6 @@ export default function App() {
     setErrorMessage(null);
     try {
       const response = await fetchWithTimeout('/api/letters');
-      if (response.status === 401) {
-        setIsAuthenticated(false);
-        setCurrentView('login');
-        setLoginErrorMessage('Please log in again to continue.');
-        setLetters([]);
-        setSelectedLetterId(null);
-        setEditingLetterId(null);
-        return;
-      }
-
       if (!response.ok) {
         throw new Error(await parseApiError(response));
       }
@@ -121,50 +113,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const response = await fetchWithTimeout('/api/auth', undefined, 6000);
-        if (response.status === 401) {
-          setIsAuthenticated(false);
-          setCurrentView('login');
-          return;
-        }
-
-        if (!response.ok) {
-          setLoginErrorMessage(await parseApiError(response));
-          setIsAuthenticated(false);
-          setCurrentView('login');
-          return;
-        }
-
-        if (!isJsonResponse(response)) {
-          setLoginErrorMessage(API_UNAVAILABLE_MESSAGE);
-          setIsAuthenticated(false);
-          setCurrentView('login');
-          return;
-        }
-
-        const data = await response.json();
-        if (data?.authenticated !== true) {
-          setIsAuthenticated(false);
-          setCurrentView('login');
-          return;
-        }
-
-        setIsAuthenticated(true);
-        setCurrentView('list');
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          setLoginErrorMessage('Session check timed out. Make sure you opened the Vercel dev URL shown in terminal.');
-        } else {
-          setLoginErrorMessage(API_UNAVAILABLE_MESSAGE);
-        }
-        setIsAuthenticated(false);
-        setCurrentView('login');
-      } finally {
-        setIsCheckingSession(false);
-      }
-    })();
+    const hasAccess = window.sessionStorage.getItem(ACCESS_STORAGE_KEY) === 'true';
+    setIsAuthenticated(hasAccess);
+    setCurrentView(hasAccess ? 'list' : 'login');
+    setIsCheckingSession(false);
   }, []);
 
   useEffect(() => {
@@ -187,46 +139,20 @@ export default function App() {
   const handleLogin = async (password: string) => {
     setLoginErrorMessage(null);
 
-    try {
-      const response = await fetchWithTimeout('/api/auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      });
-
-      if (!response.ok) {
-        throw new Error(await parseApiError(response));
-      }
-
-      if (!isJsonResponse(response)) {
-        throw new Error(API_UNAVAILABLE_MESSAGE);
-      }
-
-      const data = await response.json();
-      if (data?.success !== true) {
-        throw new Error('Unexpected response from auth API');
-      }
-
-      setIsAuthenticated(true);
-      setCurrentView('list');
-      setIsLoading(true);
-      await loadLetters();
-    } catch (error) {
-      console.error('Failed to authenticate:', error);
-      const message = error instanceof Error ? error.message : 'That password did not work. Try again.';
-      setLoginErrorMessage(message);
+    if (password.trim() !== CLIENT_PASSWORD) {
+      setLoginErrorMessage('That password did not work. Try again.');
+      return;
     }
+
+    window.sessionStorage.setItem(ACCESS_STORAGE_KEY, 'true');
+    setIsAuthenticated(true);
+    setCurrentView('list');
+    setIsLoading(true);
+    await loadLetters();
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth', { method: 'DELETE' });
-    } catch (error) {
-      console.error('Failed to logout:', error);
-    }
-
+  const handleLogout = () => {
+    window.sessionStorage.removeItem(ACCESS_STORAGE_KEY);
     setIsAuthenticated(false);
     setCurrentView('login');
     setLetters([]);

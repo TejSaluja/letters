@@ -1,5 +1,4 @@
 import { sql } from "@vercel/postgres";
-import { verifyRequestSession } from "./_auth.js";
 
 const VALID_RECIPIENTS = new Set(["tej", "ridhi"]);
 
@@ -55,11 +54,6 @@ function validatePayload(payload) {
 
 export default async function handler(req, res) {
   try {
-    const auth = verifyRequestSession(req);
-    if (!auth.ok) {
-      return res.status(auth.status).json({ error: auth.error });
-    }
-
     await ensureLettersTable();
 
     if (req.method === "GET") {
