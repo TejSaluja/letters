@@ -28,16 +28,11 @@ export function LoginPage({ onLogin, errorMessage = null }: LoginPageProps) {
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-red-50 p-4 md:p-8 flex items-center justify-center">
       <div className="w-full max-w-lg rounded-3xl border-2 border-rose-200 bg-white/70 backdrop-blur-md shadow-2xl p-8 md:p-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center gap-2 rounded-full bg-rose-100 px-4 py-2 mb-5">
-            <Sparkles className="h-4 w-4 text-rose-500" />
-            <span className="text-rose-700">Private letters</span>
-          </div>
           <div className="flex items-center justify-center gap-3 mb-3">
             <Heart className="w-8 h-8 text-rose-500 fill-rose-500" />
             <h1 className="text-3xl md:text-4xl text-rose-900">what&apos;s the secret password?</h1>
             <Heart className="w-8 h-8 text-rose-500 fill-rose-500" />
           </div>
-          <p className="text-rose-700">Enter the shared password to open your letter list.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
