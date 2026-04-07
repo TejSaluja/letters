@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { LetterList } from './components/LetterList';
 import { WriteLetter } from './components/WriteLetter';
 import { ViewLetter } from './components/ViewLetter';
+import { LoginPage } from './components/LoginPage';
 
 type Recipient = 'tej' | 'ridhi';
 
@@ -13,7 +14,27 @@ interface Letter {
   date: string;
 }
 
-type View = 'list' | 'write' | 'view';
+type View = 'login' | 'list' | 'write' | 'view';
+
+const API_UNAVAILABLE_MESSAGE = 'API is unavailable at this URL. Run `npm run dev:vercel` from the letters folder and open the exact URL shown in terminal.';
+
+function isJsonResponse(response: Response): boolean {
+  const contentType = response.headers.get('content-type') ?? '';
+  return contentType.includes('application/json');
+}
+
+async function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit, timeoutMs = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
 
 function normalizeLetter(letter: Partial<Letter>): Letter | null {
   if (typeof letter.id !== 'string') {
@@ -31,9 +52,16 @@ function normalizeLetter(letter: Partial<Letter>): Letter | null {
 
 async function parseApiError(response: Response): Promise<string> {
   try {
-    const data = await response.json();
-    if (typeof data?.error === 'string' && data.error) {
-      return data.error;
+    if (isJsonResponse(response)) {
+      const data = await response.json();
+      if (typeof data?.error === 'string' && data.error) {
+        return data.error;
+      }
+    } else {
+      const text = await response.text();
+      if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
+        return API_UNAVAILABLE_MESSAGE;
+      }
     }
   } catch {
     // Fall back to generic message when response is not JSON.
@@ -43,18 +71,35 @@ async function parseApiError(response: Response): Promise<string> {
 
 export default function App() {
   const [letters, setLetters] = useState<Letter[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginErrorMessage, setLoginErrorMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<View>('list');
+  const [currentView, setCurrentView] = useState<View>('login');
   const [selectedLetterId, setSelectedLetterId] = useState<string | null>(null);
   const [editingLetterId, setEditingLetterId] = useState<string | null>(null);
 
   const loadLetters = useCallback(async () => {
     setErrorMessage(null);
     try {
-      const response = await fetch('/api/letters');
+      const response = await fetchWithTimeout('/api/letters');
+      if (response.status === 401) {
+        setIsAuthenticated(false);
+        setCurrentView('login');
+        setLoginErrorMessage('Please log in again to continue.');
+        setLetters([]);
+        setSelectedLetterId(null);
+        setEditingLetterId(null);
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(await parseApiError(response));
+      }
+
+      if (!isJsonResponse(response)) {
+        throw new Error(API_UNAVAILABLE_MESSAGE);
       }
 
       const data = await response.json();
@@ -68,17 +113,68 @@ export default function App() {
       setLetters(normalized);
     } catch (error) {
       console.error('Error loading letters:', error);
-      setErrorMessage('Could not load letters from the server. Please try again.');
+      const message = error instanceof Error ? error.message : 'Could not load letters from the server. Please try again.';
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadLetters();
-  }, [loadLetters]);
+    void (async () => {
+      try {
+        const response = await fetchWithTimeout('/api/auth', undefined, 6000);
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          setCurrentView('login');
+          return;
+        }
+
+        if (!response.ok) {
+          setLoginErrorMessage(await parseApiError(response));
+          setIsAuthenticated(false);
+          setCurrentView('login');
+          return;
+        }
+
+        if (!isJsonResponse(response)) {
+          setLoginErrorMessage(API_UNAVAILABLE_MESSAGE);
+          setIsAuthenticated(false);
+          setCurrentView('login');
+          return;
+        }
+
+        const data = await response.json();
+        if (data?.authenticated !== true) {
+          setIsAuthenticated(false);
+          setCurrentView('login');
+          return;
+        }
+
+        setIsAuthenticated(true);
+        setCurrentView('list');
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          setLoginErrorMessage('Session check timed out. Make sure you opened the Vercel dev URL shown in terminal.');
+        } else {
+          setLoginErrorMessage(API_UNAVAILABLE_MESSAGE);
+        }
+        setIsAuthenticated(false);
+        setCurrentView('login');
+      } finally {
+        setIsCheckingSession(false);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    setIsLoading(true);
+    void loadLetters();
+
     const pollTimer = window.setInterval(() => {
       void loadLetters();
     }, 15000);
@@ -86,7 +182,59 @@ export default function App() {
     return () => {
       window.clearInterval(pollTimer);
     };
-  }, [loadLetters]);
+  }, [isAuthenticated, loadLetters]);
+
+  const handleLogin = async (password: string) => {
+    setLoginErrorMessage(null);
+
+    try {
+      const response = await fetchWithTimeout('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await parseApiError(response));
+      }
+
+      if (!isJsonResponse(response)) {
+        throw new Error(API_UNAVAILABLE_MESSAGE);
+      }
+
+      const data = await response.json();
+      if (data?.success !== true) {
+        throw new Error('Unexpected response from auth API');
+      }
+
+      setIsAuthenticated(true);
+      setCurrentView('list');
+      setIsLoading(true);
+      await loadLetters();
+    } catch (error) {
+      console.error('Failed to authenticate:', error);
+      const message = error instanceof Error ? error.message : 'That password did not work. Try again.';
+      setLoginErrorMessage(message);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth', { method: 'DELETE' });
+    } catch (error) {
+      console.error('Failed to logout:', error);
+    }
+
+    setIsAuthenticated(false);
+    setCurrentView('login');
+    setLetters([]);
+    setSelectedLetterId(null);
+    setEditingLetterId(null);
+    setIsLoading(false);
+    setErrorMessage(null);
+  };
 
   const handleNewLetter = () => {
     setEditingLetterId(null);
@@ -197,6 +345,16 @@ export default function App() {
 
   return (
     <div className="size-full overflow-auto">
+      {isCheckingSession && (
+        <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-red-50 p-8 flex items-center justify-center text-rose-700">
+          Checking session...
+        </div>
+      )}
+
+      {!isCheckingSession && currentView === 'login' && (
+        <LoginPage onLogin={handleLogin} errorMessage={loginErrorMessage} />
+      )}
+
       {errorMessage && (
         <div className="sticky top-0 z-10 bg-rose-100 border-b border-rose-300 px-4 py-3 text-rose-900 flex items-center justify-between gap-3">
           <span>{errorMessage}</span>
@@ -215,13 +373,13 @@ export default function App() {
         </div>
       )}
 
-      {currentView === 'list' && isLoading && (
+      {!isCheckingSession && currentView === 'list' && isLoading && (
         <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-red-50 p-8 flex items-center justify-center text-rose-700">
           Loading letters...
         </div>
       )}
 
-      {currentView === 'list' && (
+      {!isCheckingSession && currentView === 'list' && (
         !isLoading && (
           <LetterList
             letters={letters}
@@ -229,6 +387,7 @@ export default function App() {
             onViewLetter={handleViewLetter}
             onEditLetter={handleEditLetter}
             onDeleteLetter={handleDeleteLetter}
+            onLogout={handleLogout}
           />
         )
       )}

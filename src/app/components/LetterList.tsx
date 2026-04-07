@@ -16,9 +16,10 @@ interface LetterListProps {
   onViewLetter: (id: string) => void;
   onEditLetter: (id: string) => void;
   onDeleteLetter: (id: string) => void;
+  onLogout: () => void;
 }
 
-export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, onDeleteLetter }: LetterListProps) {
+export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, onDeleteLetter, onLogout }: LetterListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [letterToDelete, setLetterToDelete] = useState<string | null>(null);
   const sortedLetters = [...letters].sort((a, b) =>
@@ -58,6 +59,14 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12 pt-8">
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={onLogout}
+              className="rounded-xl border border-rose-300 bg-white/70 px-4 py-2 text-rose-800 hover:bg-white transition-colors"
+            >
+              Logout
+            </button>
+          </div>
           <div className="flex items-center justify-center gap-3 mb-4">
             <Heart className="w-10 h-10 text-rose-500 fill-rose-500" />
             <h1 className="text-4xl md:text-5xl text-rose-900">Our Love Letters</h1>
