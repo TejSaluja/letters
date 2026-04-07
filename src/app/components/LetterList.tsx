@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Heart, PlusCircle, Pencil, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
 
@@ -22,9 +22,32 @@ interface LetterListProps {
 export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, onDeleteLetter, onLogout }: LetterListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [letterToDelete, setLetterToDelete] = useState<string | null>(null);
+  const [previewCharLimit, setPreviewCharLimit] = useState(220);
   const sortedLetters = [...letters].sort((a, b) =>
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+
+  useEffect(() => {
+    const updatePreviewLimit = () => {
+      setPreviewCharLimit(window.innerWidth < 768 ? 160 : 260);
+    };
+
+    updatePreviewLimit();
+    window.addEventListener('resize', updatePreviewLimit);
+
+    return () => {
+      window.removeEventListener('resize', updatePreviewLimit);
+    };
+  }, []);
+
+  const getPreviewText = (content: string) => {
+    const normalized = content.replace(/\s+/g, ' ').trim();
+    if (normalized.length <= previewCharLimit) {
+      return normalized;
+    }
+
+    return `${normalized.slice(0, previewCharLimit).trimEnd()}...`;
+  };
 
   const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -131,8 +154,8 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
                   className="w-full text-left"
                 >
                   <h3 className="text-xl text-rose-950 mb-2">To: {letter.recipient}</h3>
-                  <p className="text-rose-700 letter-preview-clamp">
-                    {letter.content}
+                  <p className="text-rose-700 letter-preview-safe">
+                    {getPreviewText(letter.content)}
                   </p>
                 </button>
               </div>

@@ -207,11 +207,10 @@
 }
 
 @layer utilities {
-  .letter-preview-clamp {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+  .letter-preview-safe {
+    line-height: 1.5rem;
+    max-height: 4.5rem;
     overflow: hidden;
-    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }
