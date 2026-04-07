@@ -131,7 +131,7 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
                   className="w-full text-left"
                 >
                   <h3 className="text-xl text-rose-950 mb-2">To: {letter.recipient}</h3>
-                  <p className="text-rose-700 line-clamp-3">
+                  <p className="text-rose-700 letter-preview-clamp">
                     {letter.content}
                   </p>
                 </button>

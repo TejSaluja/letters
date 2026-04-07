@@ -205,3 +205,13 @@
     background: linear-gradient(to bottom, #f43f5e, #db2777);
   }
 }
+
+@layer utilities {
+  .letter-preview-clamp {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+}
