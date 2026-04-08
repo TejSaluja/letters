@@ -3,9 +3,9 @@ import { ArrowLeft, Send, Heart } from 'lucide-react';
 
 interface WriteLetterProps {
   onBack: () => void;
-  onSave: (letter: { recipient: 'tej' | 'ridhi'; author: string; content: string }) => Promise<void> | void;
+  onSave: (letter: { recipient: 'Tej' | 'Ridhi'; author: string; content: string }) => Promise<void> | void;
   initialData?: {
-    recipient: 'tej' | 'ridhi';
+    recipient: 'Tej' | 'Ridhi';
     author: string;
     content: string;
   };
@@ -13,7 +13,7 @@ interface WriteLetterProps {
 }
 
 export function WriteLetter({ onBack, onSave, initialData, isEditing = false }: WriteLetterProps) {
-  const [recipient, setRecipient] = useState<'tej' | 'ridhi'>(initialData?.recipient || 'tej');
+  const [recipient, setRecipient] = useState<'Tej' | 'Ridhi'>(initialData?.recipient || 'Tej');
   const [author, setAuthor] = useState(initialData?.author || '');
   const [content, setContent] = useState(initialData?.content || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +79,7 @@ export function WriteLetter({ onBack, onSave, initialData, isEditing = false }: 
                 <label className="block text-rose-900 mb-2">To:</label>
                 <select
                   value={recipient}
-                  onChange={(e) => setRecipient(e.target.value as 'tej' | 'ridhi')}
+                  onChange={(e) => setRecipient(e.target.value as 'Tej' | 'Ridhi')}
                   className="w-full px-4 py-3 bg-white/70 backdrop-blur-sm border-2 border-rose-200 rounded-xl focus:outline-none focus:border-rose-400 text-rose-950"
                 >
                   <option value="tej">tej</option>
