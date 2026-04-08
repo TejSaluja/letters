@@ -13,6 +13,10 @@ interface ViewLetterProps {
   onBack: () => void;
 }
 
+function formatRecipient(recipient: Letter['recipient']) {
+  return recipient === 'tej' ? 'Tej' : 'Ridhi';
+}
+
 export function ViewLetter({ letter, onBack }: ViewLetterProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-red-50 p-4 md:p-8">
@@ -52,7 +56,7 @@ export function ViewLetter({ letter, onBack }: ViewLetterProps) {
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <Heart className="w-8 h-8 text-rose-500 fill-rose-500" />
-                <h2 className="text-3xl text-rose-900">To: {letter.recipient}</h2>
+                <h2 className="text-3xl text-rose-900">To: {formatRecipient(letter.recipient)}</h2>
                 <Heart className="w-8 h-8 text-rose-500 fill-rose-500" />
               </div>
 

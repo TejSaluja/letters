@@ -19,6 +19,10 @@ interface LetterListProps {
   onLogout: () => void;
 }
 
+function formatRecipient(recipient: Letter['recipient']) {
+  return recipient === 'tej' ? 'Tej' : 'Ridhi';
+}
+
 export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, onDeleteLetter, onLogout }: LetterListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [letterToDelete, setLetterToDelete] = useState<string | null>(null);
@@ -153,7 +157,7 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
                   onClick={() => onViewLetter(letter.id)}
                   className="w-full text-left"
                 >
-                  <h3 className="text-xl text-rose-950 mb-2">To: {letter.recipient}</h3>
+                  <h3 className="text-xl text-rose-950 mb-2">To: {formatRecipient(letter.recipient)}</h3>
                   <p className="text-rose-700 letter-preview-safe">
                     {getPreviewText(letter.content)}
                   </p>
@@ -168,7 +172,7 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
           title="Delete Letter?"
           message={
             letterToDeleteData
-              ? `Are you sure you want to delete the letter to ${letterToDeleteData.recipient}? This action cannot be undone.`
+              ? `Are you sure you want to delete the letter to ${formatRecipient(letterToDeleteData.recipient)}? This action cannot be undone.`
               : 'Are you sure you want to delete this letter? This action cannot be undone.'
           }
           onConfirm={confirmDelete}
