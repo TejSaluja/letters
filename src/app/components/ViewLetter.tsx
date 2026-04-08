@@ -87,7 +87,7 @@ export function ViewLetter({ letter, onBack }: ViewLetterProps) {
 
             {/* Letter Body */}
             <div className="prose prose-rose max-w-none">
-              <div className="text-rose-950 whitespace-pre-wrap leading-8 break-words">
+              <div className="text-rose-950 whitespace-pre-wrap leading-8 max-h-[600px] overflow-y-auto pr-4">
                 {letter.content}
               </div>
             </div>
