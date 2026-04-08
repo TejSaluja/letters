@@ -82,8 +82,8 @@ export function WriteLetter({ onBack, onSave, initialData, isEditing = false }: 
                   onChange={(e) => setRecipient(e.target.value as 'Tej' | 'Ridhi')}
                   className="w-full px-4 py-3 bg-white/70 backdrop-blur-sm border-2 border-rose-200 rounded-xl focus:outline-none focus:border-rose-400 text-rose-950"
                 >
-                  <option value="tej">tej</option>
-                  <option value="ridhi">ridhi</option>
+                  <option value="Tej">Tej</option>
+                  <option value="Ridhi">Ridhi</option>
                 </select>
               </div>
 
