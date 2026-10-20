@@ -17,13 +17,14 @@ interface LetterListProps {
   onEditLetter: (id: string) => void;
   onDeleteLetter: (id: string) => void;
   onLogout: () => void;
+  onOpenPuzzle: () => void;
 }
 
 function formatRecipient(recipient: Letter['recipient']) {
   return recipient === 'tej' ? 'Tej' : 'Ridhi';
 }
 
-export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, onDeleteLetter, onLogout }: LetterListProps) {
+export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, onDeleteLetter, onLogout, onOpenPuzzle }: LetterListProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [letterToDelete, setLetterToDelete] = useState<string | null>(null);
   const [previewCharLimit, setPreviewCharLimit] = useState(220);
@@ -95,9 +96,23 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
             </button>
           </div>
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Heart className="w-10 h-10 text-rose-500 fill-rose-500" />
+            <button
+              onClick={onOpenPuzzle}
+              className="rounded-full p-0.5 text-rose-500 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose-300"
+              title="A little secret"
+              aria-label="Open the hidden puzzle"
+            >
+              <Heart className="w-10 h-10 fill-current" />
+            </button>
             <h1 className="text-4xl md:text-5xl text-rose-900">Our Love Letters</h1>
+            <button
+              onClick={onOpenPuzzle}
+              className="rounded-full p-0.5 text-rose-500 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose-300"
+              title="A little secret"
+              aria-label="Open the hidden puzzle"
+            >
             <Heart className="w-10 h-10 text-rose-500 fill-rose-500" />
+            </button>
           </div>
           <p className="text-rose-700 text-lg">A collection of our thoughts and feelings</p>
         </div>

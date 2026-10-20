@@ -3,6 +3,7 @@ import { LetterList } from './components/LetterList';
 import { WriteLetter } from './components/WriteLetter';
 import { ViewLetter } from './components/ViewLetter';
 import { LoginPage } from './components/LoginPage';
+import { PuzzleGame } from './components/PuzzleGame';
 
 type Recipient = 'tej' | 'ridhi';
 
@@ -81,6 +82,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('login');
   const [selectedLetterId, setSelectedLetterId] = useState<string | null>(null);
   const [editingLetterId, setEditingLetterId] = useState<string | null>(null);
+  const [isPuzzleOpen, setIsPuzzleOpen] = useState(false);
 
   const loadLetters = useCallback(async () => {
     setErrorMessage(null);
@@ -160,6 +162,7 @@ export default function App() {
     setEditingLetterId(null);
     setIsLoading(false);
     setErrorMessage(null);
+    setIsPuzzleOpen(false);
   };
 
   const handleNewLetter = () => {
@@ -314,6 +317,7 @@ export default function App() {
             onEditLetter={handleEditLetter}
             onDeleteLetter={handleDeleteLetter}
             onLogout={handleLogout}
+            onOpenPuzzle={() => setIsPuzzleOpen(true)}
           />
         )
       )}
@@ -333,6 +337,10 @@ export default function App() {
 
       {currentView === 'view' && selectedLetter && (
         <ViewLetter letter={selectedLetter} onBack={handleBackToList} />
+      )}
+
+      {isPuzzleOpen && currentView === 'list' && (
+        <PuzzleGame onClose={() => setIsPuzzleOpen(false)} />
       )}
     </div>
   );
