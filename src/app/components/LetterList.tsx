@@ -28,6 +28,7 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [letterToDelete, setLetterToDelete] = useState<string | null>(null);
   const [previewCharLimit, setPreviewCharLimit] = useState(220);
+  const [isDesktop, setIsDesktop] = useState(true);
   const sortedLetters = [...letters].sort((a, b) =>
     new Date(b.date).getTime() - new Date(a.date).getTime()
   );
@@ -42,6 +43,19 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
 
     return () => {
       window.removeEventListener('resize', updatePreviewLimit);
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateDesktopState = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    updateDesktopState();
+    window.addEventListener('resize', updateDesktopState);
+
+    return () => {
+      window.removeEventListener('resize', updateDesktopState);
     };
   }, []);
 
@@ -96,14 +110,18 @@ export function LetterList({ letters, onNewLetter, onViewLetter, onEditLetter, o
             </button>
           </div>
           <div className="flex items-center justify-center gap-3 mb-4">
-            <button
-              onClick={onOpenPuzzle}
-              className="rounded-full p-0.5 text-rose-500 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose-300"
-              title="A little secret"
-              aria-label="Open the hidden puzzle"
-            >
-              <Heart className="w-10 h-10 fill-current" />
-            </button>
+            {isDesktop ? (
+              <button
+                onClick={onOpenPuzzle}
+                className="rounded-full p-0.5 text-rose-500 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                title="A little secret"
+                aria-label="Open the hidden puzzle"
+              >
+                <Heart className="w-10 h-10 fill-current" />
+              </button>
+            ) : (
+              <Heart className="w-10 h-10 text-rose-500 fill-rose-500" aria-hidden="true" />
+            )}
             <h1 className="text-4xl md:text-5xl text-rose-900">Our Love Letters</h1>
             <button
               onClick={onOpenPuzzle}

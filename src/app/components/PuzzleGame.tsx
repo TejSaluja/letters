@@ -78,7 +78,7 @@ function PuzzlePieceGraphic({
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
       overflow="visible"
-      className={`absolute overflow-visible ${compact ? 'inset-[7%] h-[86%] w-[86%]' : 'inset-0 h-full w-full'}`}
+      className={`absolute overflow-visible ${compact ? 'inset-[14%] h-[72%] w-[72%]' : 'inset-0 h-full w-full'}`}
       aria-hidden="true"
     >
       <defs>
@@ -350,13 +350,13 @@ export function PuzzleGame({ onClose }: PuzzleGameProps) {
               <span>Pieces to place</span>
               <span>{remainingPieces.length} / {PIECE_COUNT}</span>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
               <div className="grid grid-cols-3 gap-3">
               {remainingPieces.map((piece) => (
                 <button
                   key={piece.id}
                   onPointerDown={(event) => handlePointerDown(event, piece.id, 'tray')}
-                  className="relative aspect-square cursor-grab touch-none bg-transparent active:cursor-grabbing"
+                  className="relative aspect-square cursor-grab touch-none overflow-visible bg-transparent active:cursor-grabbing"
                   aria-label={`Puzzle piece ${piece.id + 1}`}
                 >
                   <PuzzlePieceGraphic
