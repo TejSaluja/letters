@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, Heart, RotateCcw, X } from 'lucide-react';
+import { Heart, RotateCcw, X } from 'lucide-react';
 
 const IMAGE_SOURCE = '/assets/puzzle-image.png';
 const GRID_SIZE = 8;
@@ -78,7 +78,7 @@ function PuzzlePieceGraphic({
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
       overflow="visible"
-      className={`absolute overflow-visible ${compact ? 'inset-[14%] h-[72%] w-[72%]' : 'inset-0 h-full w-full'}`}
+      className={`absolute overflow-visible ${compact ? 'inset-[18%] h-[72%] w-[72%]' : 'inset-0 h-full w-full'}`}
       aria-hidden="true"
     >
       <defs>
@@ -162,6 +162,28 @@ export function PuzzleGame({ onClose }: PuzzleGameProps) {
     setBoardPositions(new Map());
     setDragState(null);
   }, []);
+
+  const revealHint = () => {
+    if (remainingPieces.length === 0) {
+      return;
+    }
+
+    const piece = remainingPieces[Math.floor(Math.random() * remainingPieces.length)];
+    setBoardPositions((current) => {
+      const next = new Map(current);
+      const displacedPiece = pieces.find((candidate) => {
+        const position = current.get(candidate.id);
+        return position?.row === piece.row && position.column === piece.column;
+      });
+
+      if (displacedPiece) {
+        next.delete(displacedPiece.id);
+      }
+
+      next.set(piece.id, { row: piece.row, column: piece.column });
+      return next;
+    });
+  };
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -274,12 +296,19 @@ export function PuzzleGame({ onClose }: PuzzleGameProps) {
         <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
           <div>
             <div className="mb-2 flex items-center gap-2 text-rose-700">
-              <Heart className="h-5 w-5 fill-rose-500 text-rose-500" />
+              <button
+                onClick={revealHint}
+                className="rounded-full text-rose-500 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                title="A little hint"
+                aria-label="Reveal a random puzzle piece"
+              >
+                <Heart className="h-5 w-5 fill-current" />
+              </button>
               <span className="text-sm font-medium uppercase tracking-[0.2em]">A little secret</span>
             </div>
-            <h2 className="text-3xl text-rose-950 md:text-4xl">Piece together the memory</h2>
+            <h2 className="text-3xl text-rose-950 md:text-4xl">Piece together the memories</h2>
             <p className="mt-2 text-rose-700">
-              Drag pieces onto any grid square. Use the tabs, blanks, and image edges to discover where they belong.
+              Drag pieces onto the board. ENJOYY PINDIII!!!
             </p>
           </div>
           <div className="flex shrink-0 gap-2">
@@ -302,72 +331,83 @@ export function PuzzleGame({ onClose }: PuzzleGameProps) {
           </div>
         </div>
 
-        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.4fr)]">
+        <div
+          className={`grid min-h-0 flex-1 gap-4 transition-all duration-700 ease-out ${
+            isComplete ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.4fr)]'
+          }`}
+        >
           <div
             ref={boardRef}
-            className="relative min-h-0 overflow-hidden rounded-2xl border-4 border-dashed border-rose-300 bg-rose-50 shadow-inner"
+            className={`relative aspect-[8/5] min-h-0 w-full self-center overflow-hidden rounded-2xl border-4 border-dashed border-rose-300 bg-rose-50 shadow-inner transition-all duration-700 ease-out ${
+              isComplete ? 'max-h-[calc(100vh-14rem)] scale-[1.01]' : ''
+            }`}
             aria-label="Puzzle board"
           >
-            {pieces.map((piece) => {
-              const position = boardPositions.get(piece.id);
-              if (!position) {
-                return null;
-              }
+            {isComplete ? (
+              <img
+                src={IMAGE_SOURCE}
+                alt="Completed puzzle"
+                className="absolute inset-0 h-full w-full object-contain"
+                onError={() => setImageFailed(true)}
+              />
+            ) : (
+              pieces.map((piece) => {
+                const position = boardPositions.get(piece.id);
+                if (!position) {
+                  return null;
+                }
 
-              return (
-              <div
-                key={piece.id}
-                onPointerDown={(event) => handlePointerDown(event, piece.id, 'board')}
-                className="absolute z-10 h-[12.5%] w-[12.5%] cursor-grab touch-none transition-all active:cursor-grabbing"
-                style={{ left: `${position.column * 12.5}%`, top: `${position.row * 12.5}%` }}
-              >
-                <PuzzlePieceGraphic
-                  piece={piece}
-                  onError={() => setImageFailed(true)}
-                  showBorder={!hasMatchingNeighbor(piece, position, boardPositions, pieces)}
-                />
-              </div>
-              );
-            })}
+                return (
+                  <div
+                    key={piece.id}
+                    onPointerDown={(event) => handlePointerDown(event, piece.id, 'board')}
+                    className="absolute z-10 h-[12.5%] w-[12.5%] cursor-grab touch-none transition-all active:cursor-grabbing"
+                    style={{ left: `${position.column * 12.5}%`, top: `${position.row * 12.5}%` }}
+                  >
+                    <PuzzlePieceGraphic
+                      piece={piece}
+                      onError={() => setImageFailed(true)}
+                      showBorder={!hasMatchingNeighbor(piece, position, boardPositions, pieces)}
+                    />
+                  </div>
+                );
+              })
+            )}
             {imageFailed && (
               <div className="absolute inset-0 flex items-center justify-center bg-rose-50/95 p-6 text-center text-rose-800">
                 Add your image as <code className="mx-1 rounded bg-rose-100 px-1">public/assets/puzzle-image.png</code> to start playing.
               </div>
             )}
-            {isComplete && !imageFailed && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-rose-950/65 text-center text-white">
-                <Check className="mb-2 h-12 w-12 rounded-full bg-emerald-500 p-2" />
-                <p className="text-2xl">You put it all together!</p>
-                <button onClick={restart} className="mt-4 rounded-xl bg-white px-4 py-2 text-rose-800 hover:bg-rose-50">
-                  Play again
-                </button>
-              </div>
-            )}
           </div>
 
-          <div ref={trayRef} className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 p-3">
-            <div className="mb-3 flex items-center justify-between text-sm text-rose-700">
-              <span>Pieces to place</span>
-              <span>{remainingPieces.length} / {PIECE_COUNT}</span>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2">
-              <div className="grid grid-cols-3 gap-3">
-              {remainingPieces.map((piece) => (
-                <button
-                  key={piece.id}
-                  onPointerDown={(event) => handlePointerDown(event, piece.id, 'tray')}
-                  className="relative aspect-square cursor-grab touch-none overflow-visible bg-transparent active:cursor-grabbing"
-                  aria-label={`Puzzle piece ${piece.id + 1}`}
-                >
-                  <PuzzlePieceGraphic
-                    piece={piece}
-                    onError={() => setImageFailed(true)}
-                  />
-                </button>
-              ))}
+          {!isComplete && (
+            <div
+              ref={trayRef}
+              className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-rose-200 bg-rose-50/80 p-3 opacity-100 transition-all duration-700 ease-out"
+            >
+              <div className="mb-3 flex items-center justify-between text-sm text-rose-700">
+                <span>Pieces to place</span>
+                <span>{remainingPieces.length} / {PIECE_COUNT}</span>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
+                <div className="grid grid-cols-3 gap-4">
+                  {remainingPieces.map((piece) => (
+                    <button
+                      key={piece.id}
+                      onPointerDown={(event) => handlePointerDown(event, piece.id, 'tray')}
+                      className="relative aspect-square cursor-grab touch-none overflow-visible bg-transparent active:cursor-grabbing"
+                      aria-label={`Puzzle piece ${piece.id + 1}`}
+                    >
+                      <PuzzlePieceGraphic
+                        piece={piece}
+                        onError={() => setImageFailed(true)}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
